@@ -15,6 +15,11 @@ def signup_view(request):
       name = form.cleaned_data['name']
       email = form.cleaned_data['email']
       password = form.cleaned_data['password']
+      #saving data to DB
+      user = UserModel(name=name, password=make_password(password), email=email, username=username)
+      user.save()
+      return render(request, 'success.html')
+
   elif request.method == "GET":
     form = SignUpForm()
 

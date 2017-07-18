@@ -8,9 +8,14 @@ from django.contrib.auth.hashers import make_password
 
 
 def signup_view(request):
-    # if request.method == "POST":
-    #     print 'Sign up form submitted'
-    # elif request.method == 'GET':
-    #     # form = SignUpForm()
+  if request.method == "POST":
+    form = SignUpForm(request.POST)
+    if form.is_valid():
+      username = form.cleaned_data['username']
+      name = form.cleaned_data['name']
+      email = form.cleaned_data['email']
+      password = form.cleaned_data['password']
+  elif request.method == "GET":
+    form = SignUpForm()
 
-    return render(request, 'index.html')
+  return render(request, 'index.html', {'form' : form})

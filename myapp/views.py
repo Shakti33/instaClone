@@ -6,7 +6,12 @@ from datetime import timedelta
 from django.utils import timezone
 from imgurpython import ImgurClient
 from instaClone.settings import BASE_DIR
+from django.shortcuts import render, redirect
 
+
+CLIENT_ID = 'f9544e46df27231'
+
+CLIENT_SECRET = '442e3914273ccc69971a19eb17ab7bd751d55860'
 
 
 # Create your views here.
@@ -72,7 +77,7 @@ def post_view(request):
 
                 path = str(BASE_DIR + post.image.url)
 
-                client = ImgurClient('f9544e46df27231', '442e3914273ccc69971a19eb17ab7bd751d55860')
+                client = ImgurClient(CLIENT_ID, CLIENT_SECRET)
                 post.image_url = client.upload_from_path(path, anon=True)['link']
                 post.save()
 

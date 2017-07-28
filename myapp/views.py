@@ -3,6 +3,7 @@ from forms import SignUpForm, LoginForm, PostForm, LikeForm, CommentForm
 from models import UserModel, SessionToken, PostModel, LikeModel, CommentModel
 from django.contrib.auth.hashers import make_password, check_password
 from datetime import timedelta
+from datetime import datetime
 from django.utils import timezone
 from imgurpython import ImgurClient
 from instaClone.settings import BASE_DIR
@@ -15,7 +16,7 @@ CLIENT_SECRET = '442e3914273ccc69971a19eb17ab7bd751d55860'
 
 
 # Create your views here.
-
+today= datetime.now()
 
 def signup_view(request):
     if request.method == "POST":
@@ -33,7 +34,7 @@ def signup_view(request):
     else:
         form = SignUpForm()
 
-    return render(request, 'index.html', {'form': form})
+    return render(request, 'index.html', {'today':today },{'form': form})
 
 
 def login_view(request):
@@ -75,7 +76,7 @@ def post_view(request):
                 post = PostModel(user=user, image=image, caption=caption)
                 post.save()
 
-                path = str(BASE_DIR + post.image.url)
+                path = str(BASE_DIR + '/' +  post.image.url)
 
                 client = ImgurClient(CLIENT_ID, CLIENT_SECRET)
                 post.image_url = client.upload_from_path(path, anon=True)['link']
@@ -94,7 +95,7 @@ def feed_view(request):
     user = check_validation(request)
     if user:
 
-        posts = PostModel.objects.all().order_by('created_on')
+        posts = PostModel.objects.all().order_by('-created_on')
 
         for post in posts:
             existing_like = LikeModel.objects.filter(post_id=post.id, user=user).first()

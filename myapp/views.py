@@ -277,8 +277,9 @@ def upvote_view(request):
             else:
                 print 'stupid mistake'
                 #liked_msg = 'Unliked!'
-
-        return redirect('/feeds/')
+        else:
+            print "not valid"
+            return redirect('/feeds/')
     else:
         return redirect('/login/')
 

@@ -1,22 +1,31 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.shortcuts import render, redirect
-from forms import SignUpForm, LoginForm, PostForm, LikeForm, CommentForm
+import datetime
+from forms import SignUpForm, LoginForm, PostForm, LikeForm, CommentForm, UpvoteForm
 from models import UserModel, SessionToken, PostModel, LikeModel, CommentModel
 from django.contrib.auth.hashers import make_password, check_password
 from datetime import timedelta
-from datetime import datetime
 from django.utils import timezone
 from imgurpython import ImgurClient
 from instaClone.settings import BASE_DIR
-from django.shortcuts import render, redirect
-
+from imgurpython import ImgurClient
+from clarifai.rest import ClarifaiApp , Image as ClImage
+import requests
+import sendgrid
 
 CLIENT_ID = 'f9544e46df27231'
 
 CLIENT_SECRET = '442e3914273ccc69971a19eb17ab7bd751d55860'
 
+PARALLEL_DOTS_KEY = "iZnVrpzvORopBRhgeycnlcCLRcyplf2xZzP2E4QPuXo"
+
+SEND_GRID_KEY = "SG.-wxTqIzQSIS9Kryob6T7pA.RP7mpLSF3BWlQexfv52dLpm6s1g1jxcblZmTlzTb2G"
+
 
 # Create your views here.
-today= datetime.now()
+
 
 def signup_view(request):
     if request.method == "POST":
@@ -34,7 +43,7 @@ def signup_view(request):
     else:
         form = SignUpForm()
 
-    return render(request, 'index.html', {'today':today },{'form': form})
+    return render(request, 'index.html', {'form': form})
 
 
 def login_view(request):
@@ -77,10 +86,22 @@ def post_view(request):
                 post.save()
 
                 path = str(BASE_DIR + '/' +  post.image.url)
+                if checkComment(caption) == 1 and checkImage(path) == 1:
 
-                client = ImgurClient(CLIENT_ID, CLIENT_SECRET)
-                post.image_url = client.upload_from_path(path, anon=True)['link']
-                post.save()
+                    print post.image_url
+                    # adding imgur client to maintain url of images
+                    # try catch edge case if connection fails or image can't be uploaded
+                    try:
+                        client = ImgurClient(CLIENT_ID, CLIENT_SECRET)
+                        post.image_url = client.upload_from_path(path, anon=True)['link']
+                    except:
+                        return render(request, 'post.html', {'msg': 'Failed to upload! Try again later'})
+
+                    post.save()
+                    return render(request,'login_success.html',{'msg': 'Post added successfully!'})
+                else:
+                    return render(request, 'login_success.html', {'msg': 'Please avoid use of obscene language and images'})
+                    post.delete()
 
                 return redirect('/feeds/')
 
@@ -139,9 +160,125 @@ def comment_view(request):
     else:
         return redirect('/login')
 
+
+def logout_view(request):
+
+    user = check_validation(request)
+
+    if user is not None:
+        latest_sessn = SessionToken.objects.filter(user=user).last()
+        if latest_sessn:
+            latest_sessn.delete()
+            return redirect("/login/")
+            # how to get cookies in python to delete cookie n session
+
+
+def comment_email(commentor, to_email):
+    msg_payload = {
+        "personalizations": [
+            {
+                "to": [
+                    {
+                        "email": to_email
+                    }
+                ],
+                "subject": 'Your post is been noticed!'
+            }
+        ],
+        "from": {
+            "email": "admin@sociokids.com",
+            "name": 'SocioAdmin'
+        },
+        "content": [
+            {
+                "type": "text/html",
+                "value": '<h1>SocioKids</h1><br><br> ' + commentor + ' just commented on your post. <br> <br><h2><a href="sociokids.com">Have a look </a></h2>'
+
+            }
+        ]
+    }
+    response = sndgrd_client.client.mail.send.post(request_body=msg_payload)
+    print response
+
+def checkImage(path):
+    app = ClarifaiApp(api_key='db9fc8c5cc4445179b039488b922c7ab')
+
+    # get the general model
+    try:
+        model = app.models.get('general-v1.3')
+        image = ClImage(file_obj=open(path, 'rb'))
+        pred = model.predict([image])
+
+        for i in range(0, len(pred['outputs'][0]['data']['concepts'])):
+             if pred['outputs'][0]['data']['concepts'][i]['name'] == "adult":
+                 if pred['outputs'][0]['data']['concepts'][i]['value'] > 0.5:
+                     return 0
+                 else:
+                     return 1
+             else:
+                 return 1
+        return 0
+    except:
+        return 0
+
+
+def checkComment(commenttext):
+    req_json = None
+    req_url = "https://apis.paralleldots.com/abuse"
+    payload = {
+  "text": commenttext,
+  "apikey": PARALLEL_DOTS_KEY
+}
+    # 1 is for non abusive and 0 is for abusive
+    try:
+        req_json = requests.post(req_url, payload).json()
+        if req_json is not None:
+            # sentiment = req_json['sentiment']
+            print req_json['sentence_type']
+            print req_json['confidence_score']
+            if req_json['sentence_type'] == "Non Abusive":
+                if req_json['confidence_score'] > 0.60:
+                    return 1
+                else:
+                    return 0
+            else:
+                return 0
+    except:
+        return 0
+
+
 @property
 def comments(self):
     return CommentModel.objects.filter(post=self).order_by('created_on')
+
+def upvote_view(request):
+    user = check_validation(request)
+    comment = None
+    print "upvote view"
+    if user and request.method == 'POST':
+
+        form = UpvoteForm(request.POST)
+        if form.is_valid():
+            print form.cleaned_data
+
+            comment_id = int(form.cleaned_data.get('id'))
+
+            comment = Comment.objects.filter(id=comment_id).first()
+            print "upvoted not yet"
+
+            if comment is not None:
+                # print ' unliking post'
+                print "upvoted"
+                comment.upvote_num += 1
+                comment.save()
+                print comment.upvote_num
+            else:
+                print 'stupid mistake'
+                #liked_msg = 'Unliked!'
+
+        return redirect('/login_success/')
+    else:
+        return redirect('/login/')
 
 
 # For validating the session

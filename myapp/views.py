@@ -23,6 +23,8 @@ PARALLEL_DOTS_KEY = "iZnVrpzvORopBRhgeycnlcCLRcyplf2xZzP2E4QPuXo"
 
 SEND_GRID_KEY = "SG.-wxTqIzQSIS9Kryob6T7pA.RP7mpLSF3BWlQexfv52dLpm6s1g1jxcblZmTlzTb2G"
 
+sndgrd_client = sendgrid.SendGridAPIClient(apikey=SEND_GRID_KEY)
+
 
 # Create your views here.
 
@@ -263,7 +265,7 @@ def upvote_view(request):
 
             comment_id = int(form.cleaned_data.get('id'))
 
-            comment = Comment.objects.filter(id=comment_id).first()
+            comment = CommentModel.objects.filter(id=comment_id).first()
             print "upvoted not yet"
 
             if comment is not None:
@@ -276,7 +278,7 @@ def upvote_view(request):
                 print 'stupid mistake'
                 #liked_msg = 'Unliked!'
 
-        return redirect('/login_success/')
+        return redirect('/feeds/')
     else:
         return redirect('/login/')
 

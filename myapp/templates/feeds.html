@@ -1,5 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
+    <meta charset="UTF-8">
+    <title>Welcome back SocioKid</title>
+    {% load staticfiles %}
+
+       <!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
@@ -12,7 +27,9 @@
 
 
     {% for post in posts %}
+<div style="text-align: center;">
 
+<div>
 
         <h3> {{ post.user.name }} </h3>
         <p>[{{ post.created_on }}]</p>
@@ -47,7 +64,7 @@
                     {{ abuse_msg }}
                 </div>
 
-      <div>
+        </div>
             {% for comment in post.comments %}
                 <p><b>{{ comment.user.name }}:</b> {{ comment.comment_text }} <br></p>
             <p>  [{{ comment.created_on }}] </p>
@@ -58,11 +75,13 @@
 
 
                 <input type="submit" class="btn btn-default" value="Upvote">
-              </form>
-            {% endfor %}
-      </div>
 
-    {% endfor %}
+              </form><span>Upvotes: {{comment.upvote_num}}</span>
+
+            {% endfor %}
         </div>
+</div>
+ <hr />
+    {% endfor %}
 </body>
 </html>

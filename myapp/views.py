@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.shortcuts import render, redirect
 import datetime
-from forms import SignUpForm, LoginForm, PostForm, LikeForm, CommentForm, UpvoteForm
+from forms import SignUpForm, LoginForm, PostForm, LikeForm, CommentForm, UpvoteForm, SearchForm
 from models import UserModel, SessionToken, PostModel, LikeModel, CommentModel
 from django.contrib.auth.hashers import make_password, check_password
 from datetime import timedelta
@@ -115,6 +115,8 @@ def post_view(request):
 
 
 def feed_view(request):
+    response_data = {}
+
     user = check_validation(request)
     if user:
 
@@ -125,9 +127,8 @@ def feed_view(request):
             if existing_like:
                 post.has_liked = True
 
-        return render(request, 'feeds.html', {'posts': posts})
+        return render(request, 'feeds.html', {'posts': posts, 'msg':'Welcome '+user.username, 'comment_len':len(posts)})
     else:
-
         return redirect('/login/')
 
 
@@ -294,3 +295,22 @@ def check_validation(request):
                 return session.user
     else:
         return None
+
+
+def query_based_search_view(request):
+
+    user = check_validation(request)
+    if user:
+        if request.method == "GET":
+            searchForm = SearchForm(request.GET)
+            if searchForm.is_valid():
+                print 'valid'
+                username_query = searchForm.cleaned_data.get('searchquery')
+                print username_query
+                user_with_query = UserModel.objects.filter(username=username_query).first();
+                posts = PostModel.objects.filter(user=user_with_query)
+                return render(request, 'login_success.html',{'posts':posts})
+            else:
+                return redirect('/login_success/')
+    else:
+        return redirect('/login/')

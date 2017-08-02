@@ -13,6 +13,7 @@ class LoginForm(forms.ModelForm):
         model = UserModel
         fields = ['username', 'password']
 
+
 class PostForm(forms.ModelForm):
     class Meta:
         model = PostModel
@@ -32,5 +33,10 @@ class CommentForm(forms.ModelForm):
         model = CommentModel
         fields = ['comment_text', 'post']
 
+
 class UpvoteForm(forms.Form):
     id = forms.IntegerField()
+
+
+class SearchForm(forms.Form):
+    searchquery = forms.CharField();

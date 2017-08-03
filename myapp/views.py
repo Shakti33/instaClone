@@ -203,6 +203,7 @@ def comment_email(commentor, to_email):
     response = sndgrd_client.client.mail.send.post(request_body=msg_payload)
     print response
 
+
 def checkImage(path):
     app = ClarifaiApp(api_key='db9fc8c5cc4445179b039488b922c7ab')
 
@@ -253,6 +254,7 @@ def checkComment(commenttext):
 @property
 def comments(self):
     return CommentModel.objects.filter(post=self).order_by('created_on')
+
 
 def upvote_view(request):
     user = check_validation(request)
@@ -309,8 +311,8 @@ def query_based_search_view(request):
                 print username_query
                 user_with_query = UserModel.objects.filter(username=username_query).first();
                 posts = PostModel.objects.filter(user=user_with_query)
-                return render(request, 'login_success.html',{'posts':posts})
+                return render(request, 'feeds.html',{'posts':posts})
             else:
-                return redirect('/login_success/')
+                return redirect('/feeds/')
     else:
         return redirect('/login/')
